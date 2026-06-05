@@ -289,30 +289,22 @@ body {
   flex-grow: 1;
 }
 
+/* Gallery uses JS masonry — cards are absolutely positioned */
 #gallery {
-  columns: 1;
-  column-gap: 1.5rem;
-}
-
-@media (min-width: 1280px) {
-  #gallery { columns: 2; }
-}
-@media (min-width: 1600px) {
-  #gallery { columns: 3; }
+  position: relative;
+  /* height is set by JS */
 }
 
 /* --- Directory Cards --- */
 .card {
-  break-inside: avoid-column;
+  position: absolute;
   background: #fff;
   border: 1px solid #e7e5e4;
   cursor: pointer;
   transition: border-color 0.3s;
-  position: relative;
   overflow: hidden;
-  margin-bottom: 1.5rem;
-  display: inline-block;
-  width: 100%;
+  /* width and top/left set by JS masonry */
+  box-sizing: border-box;
 }
 .card:hover { border-color: #000; }
 .card.expanded { border-color: #000; }
