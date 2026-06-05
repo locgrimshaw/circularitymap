@@ -15,7 +15,7 @@ create table if not exists entries (
   lat         double precision not null,
   lng         double precision not null,
   photo       text,
-  desc        text not null,
+  description text not null,
   borough     text
 );
 

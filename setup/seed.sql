@@ -4,7 +4,7 @@
 -- with the 60 starter entries.
 -- =====================================================
 
-insert into entries (name, category, website, location, lat, lng, photo, desc, borough) values
+insert into entries (name, category, website, location, lat, lng, photo, description, borough) values
 ('Library of Things', 'community', 'https://libraryofthings.co.uk', 'Crystal Palace', 51.4200, -0.0700, 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600', 'A community space to borrow useful items affordably.', null),
 ('Oddbox', 'startup', 'https://oddbox.co.uk', 'Vauxhall', 51.4862, -0.1228, 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=600', 'Rescuing surplus fruit and veg directly from farms.', null),
 ('The Restart Project', 'skills', 'https://therestartproject.org', 'Camden', 51.5390, -0.1426, 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=600', 'Helping people fix their own electronics to reduce e-waste.', null),

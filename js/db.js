@@ -63,7 +63,8 @@ async function fetchEntries() {
     console.warn("Supabase not configured — using bundled seed data (read-only mode).");
     return SEED_DATA;
   }
-  return supabaseFetch("entries?select=*&order=created_at.desc");
+  const rows = await supabaseFetch("entries?select=*&order=created_at.desc");
+  return rows.map(r => ({ ...r, desc: r.description ?? r.desc }));
 }
 
 /**
@@ -77,11 +78,16 @@ async function insertEntry(entry) {
     SEED_DATA.unshift(fake);
     return fake;
   }
+  // Map JS 'desc' property to DB column 'description'
+  const { desc, ...rest } = entry;
   const rows = await supabaseFetch("entries", {
     method: "POST",
-    body: JSON.stringify(entry)
+    body: JSON.stringify({ ...rest, description: desc })
   });
-  return rows[0];
+  // Map back so the rest of the app can use 'desc'
+  const saved = rows[0];
+  if (saved && saved.description && !saved.desc) saved.desc = saved.description;
+  return saved;
 }
 
 export { fetchEntries, insertEntry, isConfigured };
