@@ -33,21 +33,31 @@ function isConfigured() {
 }
 
 async function supabaseFetch(path, options = {}) {
+  const isWrite = options.method && options.method !== "GET";
+
+  const headers = {
+    "apikey": DB_CONFIG.anonKey,
+    "Authorization": `Bearer ${DB_CONFIG.anonKey}`,
+    "Content-Type": "application/json",
+  };
+
+  // Only send Prefer: return=representation on writes (POST/PATCH etc.)
+  // Sending it on GET requests causes a 400 error in some Supabase versions.
+  if (isWrite) {
+    headers["Prefer"] = "return=representation";
+  }
+
   const res = await fetch(`${DB_CONFIG.url}/rest/v1/${path}`, {
     ...options,
-    headers: {
-      "apikey": DB_CONFIG.anonKey,
-      "Authorization": `Bearer ${DB_CONFIG.anonKey}`,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation",
-      ...(options.headers || {})
-    }
+    headers: { ...headers, ...(options.headers || {}) }
   });
+
   if (!res.ok) {
     const err = await res.text();
+    console.error(`Supabase ${options.method || "GET"} /${path} failed (${res.status}):`, err);
     throw new Error(`Supabase error (${res.status}): ${err}`);
   }
-  // 204 No Content
+
   if (res.status === 204) return [];
   return res.json();
 }
@@ -63,8 +73,10 @@ async function fetchEntries() {
     console.warn("Supabase not configured — using bundled seed data (read-only mode).");
     return SEED_DATA;
   }
-  const rows = await supabaseFetch("entries?select=*&order=created_at.desc");
-  return rows.map(r => ({ ...r, desc: r.description ?? r.desc }));
+  // Use column:direction syntax (not dot notation) for the order param
+  const rows = await supabaseFetch("entries?select=*&order=created_at:desc");
+  // Normalise DB column 'description' back to 'desc' used throughout the app
+  return rows.map(r => ({ ...r, desc: r.description ?? r.desc ?? "" }));
 }
 
 /**
@@ -73,7 +85,6 @@ async function fetchEntries() {
  */
 async function insertEntry(entry) {
   if (!isConfigured()) {
-    // In unconfigured mode, just fake a local insert so the UI still works
     const fake = { ...entry, id: Date.now(), created_at: new Date().toISOString() };
     SEED_DATA.unshift(fake);
     return fake;
@@ -84,9 +95,9 @@ async function insertEntry(entry) {
     method: "POST",
     body: JSON.stringify({ ...rest, description: desc })
   });
-  // Map back so the rest of the app can use 'desc'
   const saved = rows[0];
-  if (saved && saved.description && !saved.desc) saved.desc = saved.description;
+  // Map back so the rest of the app can use 'desc'
+  if (saved) saved.desc = saved.description ?? saved.desc ?? "";
   return saved;
 }
 
@@ -94,8 +105,7 @@ export { fetchEntries, insertEntry, isConfigured };
 
 // =====================================================
 // SEED DATA — 60 real London circular economy entries
-// This is used as a fallback before Supabase is set up,
-// and also lives in setup/seed.sql for DB population.
+// Used as a fallback before Supabase is configured.
 // =====================================================
 
 const SEED_DATA = [
