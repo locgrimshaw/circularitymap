@@ -19,7 +19,7 @@
 // =====================================================
 
 const DB_CONFIG = {
-  url: "https://cpufxkgcysicscurcowg.supabase.co/rest/v1/",          // e.g. https://abcdefgh.supabase.co
+  url: "https://cpufxkgcysicscurcowg.supabase.co",          // e.g. https://abcdefgh.supabase.co
   anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwdWZ4a2djeXNpY3NjdXJjb3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MzIzMzAsImV4cCI6MjA5NjIwODMzMH0.WYqv5PaP11KqXrH6gQIZP4dfFdVNAcmtk4HuHG5jMK0"  // long JWT string from Project Settings → API
 };
 
