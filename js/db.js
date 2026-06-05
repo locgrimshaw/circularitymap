@@ -74,7 +74,7 @@ async function fetchEntries() {
     return SEED_DATA;
   }
   // Use column:direction syntax (not dot notation) for the order param
-  const rows = await supabaseFetch("entries?select=*&order=created_at:desc");
+  const rows = await supabaseFetch("entries?select=*&order=created_at.desc");
   // Normalise DB column 'description' back to 'desc' used throughout the app
   return rows.map(r => ({ ...r, desc: r.description ?? r.desc ?? "" }));
 }
