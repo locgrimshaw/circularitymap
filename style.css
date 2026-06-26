@@ -637,21 +637,39 @@ body {
 
 @media (max-width: 767px) {
 
-  /* Make room for the fixed bottom tab bar */
-  .app-wrapper {
-    padding-bottom: 64px;
+  /* Use dynamic viewport height so the mobile browser's address bar
+     doesn't push the tab bar off-screen. Fall back to vh first. */
+  html, body {
+    overflow: hidden;
   }
 
-  /* The split layout becomes a single stacking context */
+  .app-wrapper {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0; /* tab bar is a flex child, not overlaid */
+  }
+
+  /* Header stays compact and fixed in the column flow */
+  .site-header {
+    padding: 0.85rem 1.25rem;
+    flex-shrink: 0;
+  }
+  .site-title { font-size: 1.4rem; }
+  .site-subtitle { font-size: 0.6rem; margin-top: 0.35rem; }
+
+  /* The main layout takes all remaining space between header and tab bar */
   .main-layout {
     position: relative;
-    flex-grow: 1;
+    flex: 1 1 auto;
+    min-height: 0;       /* critical: lets a flex child actually shrink */
     display: block;
     overflow: hidden;
   }
 
-  /* Both panels fill the available space and stack on top
-     of each other; visibility is toggled via body classes */
+  /* Both panels fill the main-layout area; visibility toggled by body class */
   #map-container,
   .directory-panel {
     position: absolute;
@@ -661,14 +679,18 @@ body {
     border-right: none;
   }
 
-  /* Default view = Directory list */
+  /* Directory becomes scrollable within its pane */
+  .directory-panel {
+    overflow-y: auto;
+  }
+
+  /* View toggling */
   body.mobile-view-map .directory-panel { display: none; }
   body.mobile-view-map #map-container   { display: block; }
-
   body.mobile-view-list .directory-panel { display: flex; }
   body.mobile-view-list #map-container    { display: none; }
 
-  /* Fallback if no class set yet: show list */
+  /* Fallback before JS runs: show the list */
   body:not(.mobile-view-map):not(.mobile-view-list) .directory-panel { display: flex; }
   body:not(.mobile-view-map):not(.mobile-view-list) #map-container { display: none; }
 
@@ -679,19 +701,13 @@ body {
   .submit-section { padding: 1.5rem; }
   .section-divider { margin: 0 1.25rem; }
 
-  .site-header { padding: 1rem 1.25rem; }
-
-  /* Borough toggle button needs to clear nothing now — map is full height */
   #toggle-boundaries-btn { top: 0.75rem; right: 0.75rem; }
 
-  /* ---- The tab bar itself ---- */
+  /* ---- The tab bar: a flex child at the bottom of the column ---- */
   .mobile-tabbar {
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 64px;
+    flex-shrink: 0;
+    height: 60px;
     background: #fff;
     border-top: 1px solid #000;
     z-index: 2000;
