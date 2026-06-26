@@ -33,9 +33,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFilters();
   initBoroughDropdown();
   initForm();
+  initMobileTabs();
   showSetupBannerIfNeeded();
   await loadData();
 });
+
+// ---- Mobile tab bar (Directory / Map switcher) ----
+function initMobileTabs() {
+  const tabList = document.getElementById('tab-list');
+  const tabMap = document.getElementById('tab-map');
+  if (!tabList || !tabMap) return;
+
+  // Default to the directory list view
+  document.body.classList.add('mobile-view-list');
+
+  function showList() {
+    document.body.classList.add('mobile-view-list');
+    document.body.classList.remove('mobile-view-map');
+    tabList.classList.add('active');
+    tabList.setAttribute('aria-selected', 'true');
+    tabMap.classList.remove('active');
+    tabMap.setAttribute('aria-selected', 'false');
+    // Re-run masonry now that the panel is visible and has width
+    setTimeout(masonryLayout, 50);
+    setTimeout(masonryLayout, 250);
+  }
+
+  function showMap() {
+    document.body.classList.add('mobile-view-map');
+    document.body.classList.remove('mobile-view-list');
+    tabMap.classList.add('active');
+    tabMap.setAttribute('aria-selected', 'true');
+    tabList.classList.remove('active');
+    tabList.setAttribute('aria-selected', 'false');
+    // Leaflet must recalculate size after its container becomes visible
+    setTimeout(() => { if (map) map.invalidateSize(); }, 50);
+    setTimeout(() => { if (map) map.invalidateSize(); }, 250);
+  }
+
+  tabList.addEventListener('click', showList);
+  tabMap.addEventListener('click', showMap);
+}
+
+// When a map marker/popup triggers a card selection on mobile,
+// switch to the directory view so the user can see the expanded card.
+function switchToListViewIfMobile() {
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    const tabList = document.getElementById('tab-list');
+    if (tabList) tabList.click();
+  }
+}
 
 function showSetupBannerIfNeeded() {
   if (!isConfigured()) {
@@ -189,7 +236,7 @@ function renderMap() {
         <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#78716c;display:block;margin-bottom:4px">${entry.category}</span>
         <h4 style="font-weight:700;font-size:14px;margin-bottom:4px;line-height:1.2">${entry.name}</h4>
         <p style="font-size:12px;color:#78716c;margin-bottom:12px">${entry.location}</p>
-        <button onclick="window.selectEntry(${entry.id})" style="background:#000;color:#fff;width:100%;padding:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer">Details</button>
+        <button onclick="window.selectEntryFromMap(${entry.id})" style="background:#000;color:#fff;width:100%;padding:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer">Details</button>
       </div>
     `);
     marker.on('click', () => selectEntry(entry.id, false));
@@ -220,6 +267,14 @@ window.selectEntry = function(id, panMap = true) {
 function selectEntry(id, panMap = true) {
   window.selectEntry(id, panMap);
 }
+
+// Called from a map popup's "Details" button. On mobile, switch to the
+// directory view so the expanded card is visible; on desktop both are shown.
+window.selectEntryFromMap = function(id) {
+  switchToListViewIfMobile();
+  // Slight delay so the panel is visible before we scroll/expand
+  setTimeout(() => window.selectEntry(id, false), 60);
+};
 
 // ---- Gallery ----
 function getFilteredData() {
@@ -308,13 +363,14 @@ function masonryLayout() {
   const cards = Array.from(gallery.querySelectorAll('.card'));
   if (cards.length === 0) return;
 
-  const GAP = 24; // px between cards
+  const isMobile = window.matchMedia('(max-width: 767px)').matches;
+  const GAP = isMobile ? 16 : 24; // px between cards
   const galleryWidth = gallery.offsetWidth;
 
   // Decide column count based on container width
   let cols = 1;
   if (galleryWidth >= 900) cols = 3;
-  else if (galleryWidth >= 520) cols = 2;
+  else if (galleryWidth >= 480) cols = 2;
 
   const colWidth = (galleryWidth - GAP * (cols - 1)) / cols;
   const colHeights = new Array(cols).fill(0);
