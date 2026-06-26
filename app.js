@@ -315,7 +315,7 @@ function renderGallery() {
 
     card.innerHTML = `
       <div class="card-image-wrapper">
-        <img src="${entry.photo || FALLBACK_IMG}" onerror="this.src='${FALLBACK_IMG}'" alt="${entry.name}" loading="lazy">
+        <img src="${entry.photo || FALLBACK_IMG}" onerror="this.src='${FALLBACK_IMG}'" onload="window.__relayout && window.__relayout()" alt="${entry.name}">
         <div class="card-badge">${icon}</div>
         <div class="card-overlay">
           <span class="card-category">${entry.category}</span>
@@ -346,16 +346,18 @@ function renderGallery() {
     gallery.appendChild(card);
   });
 
-  // Run masonry after images load (use a small delay + ResizeObserver for robustness)
+  // Run masonry now and again as images settle / panel becomes visible
   masonryLayout();
-  // Re-run once images have loaded in case heights changed
-  setTimeout(masonryLayout, 300);
-  setTimeout(masonryLayout, 800);
+  setTimeout(masonryLayout, 200);
+  setTimeout(masonryLayout, 600);
+  setTimeout(masonryLayout, 1500);
 }
 
 // ---- Masonry layout engine ----
 // Absolutely positions cards into columns so expanding one never
-// causes others to jump or reflow.
+// causes others to jump or reflow. Heights are read from the live DOM,
+// but because the image wrapper has a fixed aspect-ratio the height is
+// stable even before the image pixels have downloaded.
 function masonryLayout() {
   const gallery = document.getElementById('gallery');
   if (!gallery) return;
@@ -366,6 +368,7 @@ function masonryLayout() {
   const isMobile = window.matchMedia('(max-width: 767px)').matches;
   const GAP = isMobile ? 16 : 24; // px between cards
   const galleryWidth = gallery.offsetWidth;
+  if (galleryWidth === 0) return; // panel is hidden; skip until visible
 
   // Decide column count based on container width
   let cols = 1;
@@ -375,21 +378,29 @@ function masonryLayout() {
   const colWidth = (galleryWidth - GAP * (cols - 1)) / cols;
   const colHeights = new Array(cols).fill(0);
 
-  cards.forEach(card => {
-    // Set width first so height measurement is accurate
-    card.style.width = colWidth + 'px';
+  // First pass: set every card's width so the browser can compute heights
+  cards.forEach(card => { card.style.width = colWidth + 'px'; });
 
-    // Place in the shortest column
+  // Force a single reflow so all heights are up to date before we read them
+  void gallery.offsetHeight;
+
+  // Second pass: measure and position
+  cards.forEach(card => {
     const shortest = colHeights.indexOf(Math.min(...colHeights));
     card.style.left = (shortest * (colWidth + GAP)) + 'px';
     card.style.top = colHeights[shortest] + 'px';
-
     colHeights[shortest] += card.offsetHeight + GAP;
   });
 
-  // Set gallery height to tallest column
   gallery.style.height = Math.max(...colHeights) + 'px';
 }
+
+// Debounced public relayout hook (called by image onload handlers)
+let __relayoutTimer;
+window.__relayout = function() {
+  clearTimeout(__relayoutTimer);
+  __relayoutTimer = setTimeout(masonryLayout, 60);
+};
 
 // Re-run masonry on window resize
 let masonryResizeTimer;
