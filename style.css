@@ -625,3 +625,119 @@ body {
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
 }
 .borough-tooltip::before { display: none; }
+
+/* =====================================================
+   MOBILE UI (max-width: 767px)
+   Tab bar at the bottom switches between Directory and
+   Map as full-screen panes. Desktop is untouched.
+   ===================================================== */
+
+/* Tab bar hidden on desktop */
+.mobile-tabbar { display: none; }
+
+@media (max-width: 767px) {
+
+  /* Make room for the fixed bottom tab bar */
+  .app-wrapper {
+    padding-bottom: 64px;
+  }
+
+  /* The split layout becomes a single stacking context */
+  .main-layout {
+    position: relative;
+    flex-grow: 1;
+    display: block;
+    overflow: hidden;
+  }
+
+  /* Both panels fill the available space and stack on top
+     of each other; visibility is toggled via body classes */
+  #map-container,
+  .directory-panel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-right: none;
+  }
+
+  /* Default view = Directory list */
+  body.mobile-view-map .directory-panel { display: none; }
+  body.mobile-view-map #map-container   { display: block; }
+
+  body.mobile-view-list .directory-panel { display: flex; }
+  body.mobile-view-list #map-container    { display: none; }
+
+  /* Fallback if no class set yet: show list */
+  body:not(.mobile-view-map):not(.mobile-view-list) .directory-panel { display: flex; }
+  body:not(.mobile-view-map):not(.mobile-view-list) #map-container { display: none; }
+
+  /* Tighter padding on small screens */
+  .filter-bar { padding: 1rem 1.25rem; }
+  .gallery-section { padding: 1.25rem; }
+  .submit-section-wrapper { padding: 1.25rem; }
+  .submit-section { padding: 1.5rem; }
+  .section-divider { margin: 0 1.25rem; }
+
+  .site-header { padding: 1rem 1.25rem; }
+
+  /* Borough toggle button needs to clear nothing now — map is full height */
+  #toggle-boundaries-btn { top: 0.75rem; right: 0.75rem; }
+
+  /* ---- The tab bar itself ---- */
+  .mobile-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #fff;
+    border-top: 1px solid #000;
+    z-index: 2000;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  }
+
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: #fff;
+    border: none;
+    border-right: 1px solid #e7e5e4;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #78716c;
+    transition: color 0.15s, background 0.15s;
+  }
+  .mobile-tab:last-child { border-right: none; }
+
+  .mobile-tab svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+  }
+
+  .mobile-tab.active {
+    color: #000;
+    background: #fafaf8;
+  }
+  .mobile-tab.active svg { stroke: #16a34a; }
+
+  /* Slightly smaller cards gap on mobile handled by JS masonry */
+}
+
+/* Make sure desktop always shows both, ignoring mobile classes */
+@media (min-width: 768px) {
+  body.mobile-view-map .directory-panel,
+  body.mobile-view-list .directory-panel { display: flex; }
+  body.mobile-view-map #map-container,
+  body.mobile-view-list #map-container { display: block; }
+}
